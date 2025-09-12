@@ -1,34 +1,39 @@
 pipeline {
   agent any
   options {
-      timeout(time:10, unit: 'SECONDS')
+      timeout(time: 10, unit: 'SECONDS')
   }
-  environment {
-    NAME = 'Yehor'
-  }
+
   stages {
-    stage('Hello') {
+    stage('Workspace Cleanup') {
       steps {
         echo 'Cleaning the workspace..'
         cleanWs()
+      }
+    }
 
+    stage('Install Node:18 and Build the App') {
+      agent {
+        docker {
+          image 'node:18-alpine'
+          reuseNode true
+        }
+      }
+      steps {
         sh '''
-          mkdir -p build
-          echo "Test artifact" > build/output.txt
+          ls -la
+          node --version
+          npm --version
+          npm ci
+          npm run build
         '''
-
-        sh 'whoami'
-        echo '-------------------'
-        echo "Hello ${env.NAME}"
-        echo "The Build Number is: ${env.BUILD_NUMBER}"
-        echo "The Build URL is: ${env.BUILD_URL}"
       }
     }
   }
   
   post {
-      success {
-          archiveArtifacts artifacts: 'build/**'
-      }
+    success {
+      archiveArtifacts artifacts: 'build/**'
+    }
   }
 }
