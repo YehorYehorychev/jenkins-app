@@ -1,17 +1,10 @@
 pipeline {
   agent any
   options {
-      timeout(time: 10, unit: 'SECONDS')
+    timeout(time: 10, unit: 'SECONDS')
   }
 
   stages {
-    stage('Workspace Cleanup') {
-      steps {
-        echo 'Cleaning the workspace..'
-        cleanWs()
-      }
-    }
-
     stage('Build with Node 18') {
       agent {
         docker {
@@ -22,20 +15,15 @@ pipeline {
       }
       steps {
         sh '''
-          echo ">>> Checking files in workspace"
+          echo ">>> Files in workspace"
           ls -la
 
           echo ">>> Node & NPM versions"
           node --version
           npm --version
 
-          if [ -f package-lock.json ]; then
-            echo ">>> Found package-lock.json, running npm ci"
-            npm ci
-          else
-            echo ">>> No package-lock.json, falling back to npm install"
-            npm install
-          fi
+          echo ">>> Installing dependencies"
+          npm ci
 
           echo ">>> Running build"
           npm run build
