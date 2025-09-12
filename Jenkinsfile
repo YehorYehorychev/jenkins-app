@@ -1,9 +1,6 @@
 pipeline {
   agent any
-  options {
-    timeout(time: 10, unit: 'SECONDS')
-  }
-
+  
   stages {
     stage('Build with Node 18') {
       agent {
