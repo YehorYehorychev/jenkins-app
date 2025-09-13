@@ -47,8 +47,10 @@ pipeline {
       }
       steps {
         sh '''
-          ./node_modules/.bin/serve -s build &
+          ./node_modules/.bin/serve -s build -l 3000 &
           SERVER_PID=$!
+          echo "Server PID=$SERVER_PID"
+          sleep 5
           npx playwright test
           kill $SERVER_PID
         '''
