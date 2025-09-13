@@ -12,17 +12,10 @@ pipeline {
       }
       steps {
         sh '''
-          echo ">>> Files in workspace"
           ls -la
-
-          echo ">>> Node & NPM versions"
           node --version
           npm --version
-
-          echo ">>> Installing dependencies"
           npm ci
-
-          echo ">>> Running build"
           npm run build
         '''
       }
@@ -47,16 +40,17 @@ pipeline {
     stage('E2E') {
       agent {
         docker {
-          image 'mcr.microsoft.com/playwright:v1.55.0-noble'
+          image 'mcr.microsoft.com/playwright:v1.39.0-noble'
           reuseNode true
           args '-u root'
         }
       }
       steps {
         sh '''
-          npm install --save-dev serve
-          node_modules/.bin/serve -s build &
+          ./node_modules/.bin/serve -s build &
+          SERVER_PID=$!
           npx playwright test
+          kill $SERVER_PID
         '''
       }
     }
