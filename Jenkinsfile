@@ -51,11 +51,7 @@ pipeline {
           SERVER_PID=$!
           echo "Server PID=$SERVER_PID"
           sleep 5
-<<<<<<< HEAD
-          npx playwright test
-=======
           npx playwright test --reporter=html
->>>>>>> dev
           kill $SERVER_PID
         '''
       }
