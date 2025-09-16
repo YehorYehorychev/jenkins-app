@@ -1,6 +1,6 @@
 pipeline {
   agent any
-  
+
   stages {
     stage('Build with Node 18') {
       agent {
@@ -60,8 +60,24 @@ pipeline {
         }
       }
     }
+
+    stage('Deploy') {
+      agent {
+        docker {
+          image 'node:18-alpine'
+          reuseNode true
+          args '-u root'
+        }
+      }
+      steps {
+        sh '''
+          npm install netlify-cli
+          ./node_modules/.bin/netlify --version
+        '''
+      }
+    }
   }
-  
+
   post {
     always {
       junit 'jest-results/junit.xml'
