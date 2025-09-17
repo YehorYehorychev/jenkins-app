@@ -62,6 +62,23 @@ pipeline {
               kill $SERVER_PID
             '''
           }
+
+          post {
+            always {
+              junit 'jest-results/junit.xml'
+              publishHTML([
+                allowMissing: false,
+                alwaysLinkToLastBuild: false,
+                icon: '',
+                keepAll: false,
+                reportDir: 'playwright-report',
+                reportFiles: 'index.html',
+                reportName: 'Playwright - Local',
+                reportTitles: '',
+                useWrapperFileDirectly: true
+              ])
+            }
+          }
         }
       }
     }
@@ -84,6 +101,26 @@ pipeline {
         '''
       }
     }
+
+    stage('Post-Deployment-Prod-E2E-Tests') {
+      agent {
+        docker {
+          image 'mcr.microsoft.com/playwright:v1.55.0-jammy'
+          reuseNode true
+          args '-u root'
+        }
+      }
+
+      environment {
+        CI_ENVIRONMENT_URL = 'https://voluble-stroopwafel-6730a7.netlify.app'
+      }
+
+      steps {
+        sh '''
+          npx playwright test --reporter=html
+        '''
+      }
+    }
   }
 
   post {
@@ -96,7 +133,7 @@ pipeline {
         keepAll: false,
         reportDir: 'playwright-report',
         reportFiles: 'index.html',
-        reportName: 'Playwright - HTML Report',
+        reportName: 'Playwright - E2E Report',
         reportTitles: '',
         useWrapperFileDirectly: true
       ])
