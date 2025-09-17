@@ -44,7 +44,7 @@ pipeline {
           }
         }
 
-        stage('E2E Tests') {
+        stage('E2E Tests - Local') {
           agent {
             docker {
               image 'mcr.microsoft.com/playwright:v1.55.0-jammy'
@@ -58,7 +58,7 @@ pipeline {
               SERVER_PID=$!
               echo "Server PID=$SERVER_PID"
               sleep 5
-              npx playwright test --reporter=html
+              npx playwright test --reporter=html --output=playwright-report/local
               kill $SERVER_PID
             '''
           }
@@ -70,12 +70,12 @@ pipeline {
                 allowMissing: false,
                 alwaysLinkToLastBuild: true,
                 keepAll: true,
-                reportDir: 'playwright-report',
+                reportDir: 'playwright-report/local',
                 reportFiles: 'index.html',
-                reportName: 'Playwright - Local',
+                reportName: 'Playwright - Local Report',
                 useWrapperFileDirectly: false
               ])
-              archiveArtifacts artifacts: 'playwright-report/**'
+              archiveArtifacts artifacts: 'playwright-report/local/**'
             }
           }
         }
@@ -116,7 +116,7 @@ pipeline {
 
       steps {
         sh '''
-          npx playwright test --reporter=html
+          npx playwright test --reporter=html --output=playwright-report/prod
         '''
       }
 
@@ -127,12 +127,12 @@ pipeline {
             allowMissing: false,
             alwaysLinkToLastBuild: true,
             keepAll: true,
-            reportDir: 'playwright-report',
+            reportDir: 'playwright-report/prod',
             reportFiles: 'index.html',
-            reportName: 'Playwright - E2E Prod Report',
+            reportName: 'Playwright - Prod Report',
             useWrapperFileDirectly: false
           ])
-          archiveArtifacts artifacts: 'playwright-report/**'
+          archiveArtifacts artifacts: 'playwright-report/prod/**'
         }
       }
     }
