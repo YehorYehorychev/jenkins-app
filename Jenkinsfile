@@ -58,7 +58,13 @@ pipeline {
               SERVER_PID=$!
               echo "Server PID=$SERVER_PID"
               sleep 5
-              npx playwright test --reporter=html --output=playwright-report/local
+
+              # Сохраняем результаты в test-results/local
+              npx playwright test --output=test-results/local
+
+              # Генерируем html-репорт в playwright-report/local
+              npx playwright show-report test-results/local --report-dir=playwright-report/local
+
               kill $SERVER_PID
             '''
           }
@@ -116,7 +122,11 @@ pipeline {
 
       steps {
         sh '''
-          npx playwright test --reporter=html --output=playwright-report/prod
+          # Сохраняем результаты в test-results/prod
+          npx playwright test --output=test-results/prod
+
+          # Генерируем html-репорт в playwright-report/prod
+          npx playwright show-report test-results/prod --report-dir=playwright-report/prod
         '''
       }
 
