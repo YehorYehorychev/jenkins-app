@@ -68,15 +68,14 @@ pipeline {
               junit 'jest-results/junit.xml'
               publishHTML([
                 allowMissing: false,
-                alwaysLinkToLastBuild: false,
-                icon: '',
-                keepAll: false,
+                alwaysLinkToLastBuild: true,
+                keepAll: true,
                 reportDir: 'playwright-report',
                 reportFiles: 'index.html',
                 reportName: 'Playwright - Local',
-                reportTitles: '',
-                useWrapperFileDirectly: true
+                useWrapperFileDirectly: false
               ])
+              archiveArtifacts artifacts: 'playwright-report/**'
             }
           }
         }
@@ -120,24 +119,26 @@ pipeline {
           npx playwright test --reporter=html
         '''
       }
+
+      post {
+        always {
+          junit 'jest-results/junit.xml'
+          publishHTML([
+            allowMissing: false,
+            alwaysLinkToLastBuild: true,
+            keepAll: true,
+            reportDir: 'playwright-report',
+            reportFiles: 'index.html',
+            reportName: 'Playwright - E2E Prod Report',
+            useWrapperFileDirectly: false
+          ])
+          archiveArtifacts artifacts: 'playwright-report/**'
+        }
+      }
     }
   }
 
   post {
-    always {
-      junit 'jest-results/junit.xml'
-      publishHTML([
-        allowMissing: false,
-        alwaysLinkToLastBuild: false,
-        icon: '',
-        keepAll: false,
-        reportDir: 'playwright-report',
-        reportFiles: 'index.html',
-        reportName: 'Playwright - E2E Report',
-        reportTitles: '',
-        useWrapperFileDirectly: true
-      ])
-    }
     success {
       archiveArtifacts artifacts: 'build/**'
     }
