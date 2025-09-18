@@ -106,8 +106,46 @@ pipeline {
           echo "Deploying to Staging. Site ID: $NETLIFY_SITE_ID"
           ./node_modules/.bin/netlify status
           ./node_modules/.bin/netlify deploy --dir=build --json > deploy-output.json
-          ./node_modules/.bin/node-jq -r '.deploy_url' deploy-output.json
+          ./node_modules/.bin/node-jq -r '.deploy_url' deploy-output.json > staging_url.txt
         '''
+        script {
+          env.CI_ENVIRONMENT_URL = readFile('staging_url.txt').trim()
+          echo "Staging deployed at: ${env.CI_ENVIRONMENT_URL}"
+        }
+      }
+    }
+
+    stage('E2E Tests - Staging') {
+      agent {
+        docker {
+          image 'mcr.microsoft.com/playwright:v1.55.0-jammy'
+          reuseNode true
+          args '-u root'
+        }
+      }
+      steps {
+        sh '''
+          echo "Running E2E tests against staging: $CI_ENVIRONMENT_URL"
+          npx playwright test --project=staging || true
+
+          rm -rf playwright-report/staging
+          mkdir -p playwright-report/staging
+          cp -r playwright-report/* playwright-report/staging/ || true
+        '''
+      }
+      post {
+        always {
+          publishHTML([
+            allowMissing: false,
+            alwaysLinkToLastBuild: true,
+            keepAll: true,
+            reportDir: 'playwright-report/staging',
+            reportFiles: 'index.html',
+            reportName: 'Playwright - Staging Report',
+            useWrapperFileDirectly: false
+          ])
+          archiveArtifacts artifacts: 'playwright-report/staging/**'
+        }
       }
     }
 
@@ -151,7 +189,9 @@ pipeline {
       }
       steps {
         sh '''
-          npx playwright test
+          echo "Running E2E tests against production: $CI_ENVIRONMENT_URL"
+          npx playwright test --project=prod || true
+
           rm -rf playwright-report/prod
           mkdir -p playwright-report/prod
           cp -r playwright-report/* playwright-report/prod/ || true
