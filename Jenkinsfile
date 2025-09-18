@@ -26,63 +26,59 @@ pipeline {
       }
     }
 
-    stage('Run Tests') {
-      parallel {
-        stage('Unit Test') {
-          agent {
-            docker {
-              image 'node:18-alpine'
-              reuseNode true
-              args '-u root'
-            }
-          }
-          steps {
-            sh '''
-              test -f build/index.html
-              npm test -- --ci --reporters=default --reporters=jest-junit
-            '''
-          }
-          post {
-            always {
-              junit 'jest-results/junit.xml'
-            }
-          }
+    stage('Unit Tests') {
+      agent {
+        docker {
+          image 'node:18-alpine'
+          reuseNode true
+          args '-u root'
         }
+      }
+      steps {
+        sh '''
+          test -f build/index.html
+          npm test -- --ci --reporters=default --reporters=jest-junit
+        '''
+      }
+      post {
+        always {
+          junit 'jest-results/junit.xml'
+        }
+      }
+    }
 
-        stage('E2E Tests - Local') {
-          agent {
-            docker {
-              image 'mcr.microsoft.com/playwright:v1.55.0-jammy'
-              reuseNode true
-              args '-u root'
-            }
-          }
-          steps {
-            sh '''
-              ./node_modules/.bin/serve -s build -l 3000 &
-              SERVER_PID=$!
-              echo "Server PID=$SERVER_PID"
-              sleep 5
+    stage('E2E Tests - Local') {
+      agent {
+        docker {
+          image 'mcr.microsoft.com/playwright:v1.55.0-jammy'
+          reuseNode true
+          args '-u root'
+        }
+      }
+      steps {
+        sh '''
+          ./node_modules/.bin/serve -s build -l 3000 &
+          SERVER_PID=$!
+          echo "Server PID=$SERVER_PID"
+          sleep 5
 
-              npx playwright test --reporter=html || true
+          npx playwright test --reporter=html || true
 
-              kill $SERVER_PID
-            '''
-          }
-          post {
-            always {
-              publishHTML([
-                allowMissing: false,
-                alwaysLinkToLastBuild: true,
-                keepAll: true,
-                reportDir: 'playwright-report',
-                reportFiles: 'index.html',
-                reportName: 'Playwright - Local Report',
-                useWrapperFileDirectly: false
-              ])
-              archiveArtifacts artifacts: 'playwright-report/**'
-            }
-          }
+          kill $SERVER_PID
+        '''
+      }
+      post {
+        always {
+          publishHTML([
+            allowMissing: false,
+            alwaysLinkToLastBuild: true,
+            keepAll: true,
+            reportDir: 'playwright-report',
+            reportFiles: 'index.html',
+            reportName: 'Playwright - Local Report',
+            useWrapperFileDirectly: false
+          ])
+          archiveArtifacts artifacts: 'playwright-report/**'
         }
       }
     }
@@ -99,7 +95,7 @@ pipeline {
         sh '''
           npm install netlify-cli@20.1.1 node-jq
           ./node_modules/.bin/netlify --version
-         
+          
           echo "Deploying to Staging. Site ID: $NETLIFY_SITE_ID"
           ./node_modules/.bin/netlify status
           ./node_modules/.bin/netlify deploy --dir=build --json > deploy-output.json
@@ -107,7 +103,7 @@ pipeline {
 
           STAGING_URL=$(cat staging_url.txt)
           echo "Staging deployed at: $STAGING_URL"
-          
+
           echo "Running E2E tests against staging: $STAGING_URL"
           CI_ENVIRONMENT_URL=$STAGING_URL npx playwright test --project=staging --reporter=html || true
         '''
