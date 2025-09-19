@@ -8,7 +8,14 @@ pipeline {
   }
 
   stages {
-    stage('Build with Node 18') {
+
+    stage('Docker') {
+      steps {
+        sh 'docker build -t playwright-jammy .'
+      }
+    }
+    
+    stage('Build') {
       agent {
         docker {
           image 'node:18-alpine'
